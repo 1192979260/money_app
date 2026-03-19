@@ -1,0 +1,14 @@
+{
+  "name": "money-app-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev:server": "pnpm --filter @money-app/server start:dev",
+    "dev:mobile": "pnpm --filter @money-app/mobile dev:h5",
+    "prisma:generate": "pnpm --filter @money-app/server prisma:generate",
+    "prisma:migrate": "pnpm --filter @money-app/server prisma:migrate",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  }
+}

@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MajorType {
+  fixed
+  extra
+  income
+}
+
+enum UsageType {
+  family
+  self
+  child
+  husband
+  other
+}
+
+enum EntrySource {
+  voice
+  text
+}
+
+enum ConversationStatus {
+  DRAFT
+  COLLECTING
+  CONFIRMING
+  CONFIRMED
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  wechatOpenid       String?             @unique
+  deviceId           String?             @unique
+  displayName        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  ledgerEntries      LedgerEntry[]
+  conversationDrafts ConversationDraft[]
+  adviceReports      AdviceReport[]
+}
+
+model LedgerEntry {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount       Decimal     @db.Decimal(10, 2)
+  currency     String      @default("CNY")
+  majorType    MajorType
+  platformTags String[]
+  usageType    UsageType
+  reason       String
+  note         String?
+  occurredAt   DateTime
+  source       EntrySource
+  rawText      String
+  conversationHistory Json?
+  status       String      @default("CONFIRMED")
+  createdAt    DateTime    @default(now())
+
+  @@index([userId, occurredAt])
+  @@index([majorType])
+}
+
+model ConversationDraft {
+  id           String             @id @default(cuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missingSlots String[]
+  slotValues   Json
+  jsonContext  String
+  lastQuestion String?
+  status       ConversationStatus @default(DRAFT)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([userId, status])
+}
+
+model AdviceReport {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodType    String
+  periodKey     String
+  inputSnapshot String
+  adviceText    String
+  createdAt     DateTime @default(now())
+
+  @@index([userId, periodType, periodKey])
+}

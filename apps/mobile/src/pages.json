@@ -1,0 +1,28 @@
+{
+  "pages": [
+    {
+      "path": "pages/chat/index",
+      "style": { "navigationBarTitleText": "语音记账" }
+    },
+    {
+      "path": "pages/ledger/index",
+      "style": { "navigationBarTitleText": "账单筛选" }
+    },
+    {
+      "path": "pages/ledger/detail",
+      "style": { "navigationBarTitleText": "账单详情" }
+    },
+    {
+      "path": "pages/analytics/index",
+      "style": { "navigationBarTitleText": "统计分析" }
+    },
+    {
+      "path": "pages/advice/index",
+      "style": { "navigationBarTitleText": "消费建议" }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": { "navigationBarTitleText": "我的" }
+    }
+  ]
+}

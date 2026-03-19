@@ -1,0 +1,43 @@
+:root {
+  --bg-base: linear-gradient(165deg, #fff7fb 0%, #eefbff 42%, #f9fff1 100%);
+  --bg-surface: #ffffff;
+  --bubble-user: #ffdff0;
+  --bubble-bot: #e8f3ff;
+  --text-primary: #34405f;
+  --text-secondary: #6f7a97;
+  --accent: #74a8ff;
+  --accent-2: #8ad8bf;
+  --danger: #ff7a96;
+  --shadow-soft: 0 8px 18px rgba(164, 178, 219, 0.22);
+  --radius-xl: 16rpx;
+}
+
+.glass-card {
+  background: var(--bg-surface);
+  border: 2rpx solid #f0f4ff;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+
+.flat-btn {
+  border: none;
+  border-radius: 20rpx;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.jelly-enter {
+  animation: jelly-enter 0.18s ease-out;
+}
+
+@keyframes jelly-enter {
+  0% {
+    transform: scale(0.96) translateY(6px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}

@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: money-app-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/server/Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: HTTP_BODY_LIMIT
+        value: 15mb
+      - key: STT_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        sync: false
+      - key: OPENAI_CHAT_MODEL
+        value: gpt-5.4-mini
+      - key: OPENAI_ADVICE_MODEL
+        value: gpt-5.4
+      - key: OPENAI_STT_MODEL
+        value: gpt-4o-mini-transcribe
+      - key: OPENAI_STT_MODEL_HIGH_NOISE
+        value: gpt-4o-transcribe
+      - key: WECHAT_APPID
+        sync: false
+      - key: WECHAT_APP_SECRET
+        sync: false
+      - key: WECHAT_CODE2SESSION_URL
+        value: https://api.weixin.qq.com/sns/jscode2session
