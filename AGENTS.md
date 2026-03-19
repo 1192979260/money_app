@@ -592,3 +592,13 @@
 - 验证：
   - `pnpm --filter @money-app/server build` 通过
   - `pnpm --filter @money-app/mobile build` 通过
+
+### 2026-03-19 - Feature Update 54
+- 修复 Render 云端端口监听问题：
+  - 后端启动改为优先监听 `process.env.PORT`，本地兜底 `3000`
+  - 文件：`apps/server/src/main.ts`
+- 修复 Supabase 连接策略：
+  - Render `DATABASE_URL` 改为 Supabase Transaction Pooler（`aws-0-us-west-2.pooler.supabase.com:6543`）
+  - 部署日志确认 Prisma 已使用 pooler 地址连接
+- 验证：
+  - `pnpm --filter @money-app/server build` 通过
