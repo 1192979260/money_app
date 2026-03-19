@@ -602,3 +602,10 @@
   - 部署日志确认 Prisma 已使用 pooler 地址连接
 - 验证：
   - `pnpm --filter @money-app/server build` 通过
+
+### 2026-03-19 - Feature Update 55
+- 修复 Render 启动阶段“无开放端口”问题：
+  - 定位原因为容器启动命令中的 `prisma migrate deploy` 在 Supabase pooler 场景阻塞，服务未进入监听阶段
+  - 调整 `apps/server/Dockerfile` 启动命令为仅启动服务进程：`node apps/server/dist/apps/server/src/main.js`
+- 说明：
+  - 数据库迁移改为独立手动执行（避免在 Web 进程启动链路阻塞）

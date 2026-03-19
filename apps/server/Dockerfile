@@ -20,4 +20,4 @@ RUN pnpm --filter @money-app/server prisma:generate \
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "pnpm --filter @money-app/server exec prisma migrate deploy && node apps/server/dist/apps/server/src/main.js"]
+CMD ["node", "apps/server/dist/apps/server/src/main.js"]
