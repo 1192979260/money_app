@@ -579,3 +579,16 @@
 - 验证：
   - `pnpm --filter @money-app/server build` 通过
   - `pnpm --filter @money-app/mobile build` 通过
+
+### 2026-03-19 - Feature Update 53
+- 完成 Cloudflare Pages 前端首发与二次发布：
+  - 新建项目：`money-app-h5`
+  - 采用“静态文件上传”方式部署（绕过 GitHub 集成拉取异常）
+  - 页面地址：`https://money-app-h5.pages.dev`
+  - 二次发布时使用 `VITE_API_BASE=https://money-app-api-fi9k.onrender.com` 重新构建并覆盖发布
+- 修复 Render 后端部署失败：
+  - 根据 Render 日志定位 Prisma 报错：容器缺少 OpenSSL，`prisma migrate deploy` 失败
+  - 更新 `apps/server/Dockerfile`，增加 `openssl` 安装步骤
+- 验证：
+  - `pnpm --filter @money-app/server build` 通过
+  - `pnpm --filter @money-app/mobile build` 通过
