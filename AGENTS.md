@@ -609,3 +609,46 @@
   - 调整 `apps/server/Dockerfile` 启动命令为仅启动服务进程：`node apps/server/dist/apps/server/src/main.js`
 - 说明：
   - 数据库迁移改为独立手动执行（避免在 Web 进程启动链路阻塞）
+
+### 2026-03-20 - Feature Update 56
+- 账单列表筛选与图表优化：
+  - “分类”筛选项移除“收入”，仅保留：`全部 / 固定支出 / 额外支出`
+  - 收入仍通过“收支类型”筛选切换，不再在“分类”中重复出现
+- 新增支出分类占比饼图：
+  - 当“收支类型=支出”时，新增“支出分类占比（按筛选结果）”饼图
+  - 统计口径：`固定支出(fixed)` 与 `额外支出(extra)` 两类金额占比
+- 验证：
+  - `pnpm --filter @money-app/mobile build` 通过
+
+### 2026-03-20 - Feature Update 57
+- 启动与连通性稳定性优化：
+  - 后端启动入口统一修正为 `dist/apps/server/src/main.js`，避免 `dist/main` 找不到导致启动失败
+  - `main.ts` 显式监听 `HOST`（默认 `0.0.0.0`），提升本地与容器环境可达性
+- 部署与文档一致性修正：
+  - `README.md` 更新聊天接口清单（补充 `start/transcribe`，移除过期 `voice`）
+  - `DEPLOY_FREE.md` 更新为“迁移手动执行”策略，并补充 Supabase pooler 建议与冒烟检查项
+  - `README.md` 新增密钥与环境变量安全提示（禁提交 `.env`、泄露后立即轮换）
+- 新增接口冒烟脚本：
+  - 新增 `scripts/smoke-api.sh`，覆盖 `auth/guest`、`chat-ledger/start`、`ledger`
+  - 根脚本新增 `pnpm smoke:api` 命令
+- 验证：
+  - `pnpm --filter @money-app/server build` 通过
+  - `pnpm smoke:api` 通过
+
+### 2026-03-20 - Feature Update 58
+- 开发环境账号一致性优化：
+  - `loginGuest` 新增开发环境 `deviceId` 锁定逻辑
+  - 开发态默认固定为 `dev-1773970839136-dkshf7`，确保本地与线上游客账号一致
+  - 支持通过 `VITE_DEV_DEVICE_ID` 覆盖默认值
+- H5 本地访问稳定性优化：
+  - `dev:h5` 启动参数新增 `--host 0.0.0.0`，避免仅本地回环监听导致 `localhost:5173` 不可达
+- 验证：
+  - 重启前后端后，`localhost:5173` 可访问
+
+### 2026-03-20 - Feature Update 59
+- 修复“选择当日仍提示日期超出范围”问题：
+  - 聊天页日期确认逻辑由“具体时间点比较”改为“仅按日期比较”
+  - 之前使用 `12:00` 与当前时刻比较，导致当天上午会被误判为未来时间
+  - 现改为 `selectedDateOnly <= todayOnly`，当天任意时段均可正常确认
+- 验证：
+  - `pnpm --filter @money-app/mobile build` 通过

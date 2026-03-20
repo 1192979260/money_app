@@ -63,7 +63,8 @@ pnpm dev:mobile
 - `POST /v1/auth/guest`
 - `POST /v1/auth/wechat`
 - `POST /v1/auth/wechat/bind`
-- `POST /v1/chat-ledger/voice`
+- `POST /v1/chat-ledger/start`
+- `POST /v1/chat-ledger/transcribe`
 - `POST /v1/chat-ledger/message`
 - `POST /v1/chat-ledger/patch`
 - `POST /v1/chat-ledger/confirm`
@@ -78,4 +79,9 @@ pnpm dev:mobile
 - 用户类型：微信登录 + 游客模式。
 - 前端若首次构建报依赖缺失，请再次执行 `pnpm install`。
 - 若前面还有 Nginx/网关，请同步放宽请求体大小（例如 `client_max_body_size`），否则仍可能返回 413。
+
+## 安全与部署注意
+- 不要提交任何 `*.env` 到仓库，密钥仅放在本地或云平台环境变量。
+- 若密钥曾泄露到聊天/截图/历史记录，请立即轮换：`JWT_SECRET`、`WECHAT_APP_SECRET`、`OPENAI_API_KEY`。
+- 云端部署后请手动执行数据库迁移，再启动服务。
 # money_app

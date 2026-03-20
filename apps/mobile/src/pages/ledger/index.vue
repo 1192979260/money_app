@@ -58,6 +58,22 @@
       </view>
       <view v-else class="empty">暂无可统计数据</view>
     </view>
+    <view v-if="showExpenseMajorPie" class="usage-pie-card glass-card">
+      <text class="usage-pie-title">支出分类占比（按筛选结果）</text>
+      <view v-if="list.length" class="usage-pie-content">
+        <view class="usage-pie" :style="expenseTypePieStyle" />
+        <view class="usage-legend">
+          <view v-for="item in expenseTypeBreakdown" :key="item.key" class="legend-row">
+            <view class="legend-left">
+              <text class="legend-dot" :style="{ background: item.color }" />
+              <text class="legend-label">{{ item.label }}</text>
+            </view>
+            <text class="legend-value">{{ item.ratioText }}（{{ item.amountText }}）</text>
+          </view>
+        </view>
+      </view>
+      <view v-else class="empty">暂无可统计数据</view>
+    </view>
 
     <scroll-view class="list" scroll-y>
       <view
@@ -124,7 +140,7 @@ const flowType = ref<'income' | 'expense'>('expense');
 const platform = ref('');
 const keyword = ref('');
 const majorType = ref('');
-const majorTypeOptions = ['全部', '固定支出', '额外支出', '收入'];
+const majorTypeOptions = ['全部', '固定支出', '额外支出'];
 const flowTypeOptions = ['支出', '收入'];
 const usageType = ref('');
 const usageTypeOptions = ['全部', '家庭', '老婆', '孩子', '老公', '其他'];
@@ -163,7 +179,7 @@ const filterSummaryText = computed(() => {
   const parts = [
     `${flowTypeLabel.value}`,
     `${yearLabel.value}${month.value ? monthLabel.value : ''}`,
-    `分类:${showMajorTypeFilter.value ? majorTypeLabel.value : '收入'}`,
+    `分类:${showMajorTypeFilter.value ? majorTypeLabel.value : '全部'}`,
     `归属:${usageTypeLabel.value}`,
     `平台:${platformLabel.value}`
   ];
@@ -178,6 +194,14 @@ const usageColorMap: Record<string, string> = {
   child: '#5AD8A6',
   husband: '#F6903D',
   other: '#9270CA'
+};
+const expenseTypeColorMap: Record<string, string> = {
+  fixed: '#5B8FF9',
+  extra: '#F6903D'
+};
+const expenseTypeLabelMap: Record<string, string> = {
+  fixed: '固定支出',
+  extra: '额外支出'
 };
 const usageLabelMap: Record<string, string> = {
   family: '家庭',
@@ -255,6 +279,46 @@ const usagePieStyle = computed(() => {
   });
   return { background: `conic-gradient(${segments.join(', ')})` };
 });
+const showExpenseMajorPie = computed(() => flowType.value === 'expense');
+const expenseTypeBreakdown = computed(() => {
+  const base: Record<string, number> = { fixed: 0, extra: 0 };
+  list.value.forEach((item) => {
+    const key = String(item.majorType || '');
+    const amount = Number(item.amount || 0);
+    if (key === 'fixed' || key === 'extra') {
+      base[key] += amount;
+    }
+  });
+
+  const total = Object.values(base).reduce((sum, value) => sum + value, 0);
+  return (Object.keys(base) as Array<keyof typeof base>).map((key) => {
+    const amount = base[key];
+    const ratio = total > 0 ? amount / total : 0;
+    return {
+      key,
+      label: expenseTypeLabelMap[key],
+      amount,
+      ratio,
+      color: expenseTypeColorMap[key],
+      amountText: `${amount.toFixed(2)}元`,
+      ratioText: `${(ratio * 100).toFixed(1)}%`
+    };
+  });
+});
+const expenseTypePieStyle = computed(() => {
+  const total = expenseTypeBreakdown.value.reduce((sum, item) => sum + item.amount, 0);
+  if (!total) {
+    return { background: '#edf2ff' };
+  }
+
+  let currentPercent = 0;
+  const segments = expenseTypeBreakdown.value.map((item) => {
+    const start = currentPercent;
+    currentPercent += item.ratio * 100;
+    return `${item.color} ${start.toFixed(2)}% ${currentPercent.toFixed(2)}%`;
+  });
+  return { background: `conic-gradient(${segments.join(', ')})` };
+});
 
 function onYearChange(e: { detail: { value: string } }) {
   const index = Number(e.detail.value);
@@ -275,8 +339,6 @@ function onFlowTypeChange(e: { detail: { value: string } }) {
   const label = flowTypeOptions[index];
   flowType.value = label === '收入' ? 'income' : 'expense';
   if (flowType.value === 'income') {
-    majorType.value = '';
-  } else if (majorType.value === '收入') {
     majorType.value = '';
   }
 }
@@ -302,7 +364,6 @@ function onPlatformChange(e: { detail: { value: string } }) {
 function toApiType(label: string) {
   if (label === '固定支出') return 'fixed';
   if (label === '额外支出') return 'extra';
-  if (label === '收入') return 'income';
   return '';
 }
 

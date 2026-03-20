@@ -1,17 +1,33 @@
 import type { AuthResult } from '@/types/api';
 import { apiRequest } from './http';
 
+const DEV_LOCKED_DEVICE_ID_DEFAULT = 'dev-1773970839136-dkshf7';
+
+function resolveDeviceId() {
+  const env = (import.meta as unknown as { env?: Record<string, string | boolean> }).env || {};
+  const isDev = Boolean(env.DEV);
+  const lockedId = String(env.VITE_DEV_DEVICE_ID || DEV_LOCKED_DEVICE_ID_DEFAULT).trim();
+
+  if (isDev && lockedId) {
+    uni.setStorageSync('deviceId', lockedId);
+    return lockedId;
+  }
+
+  let deviceId = uni.getStorageSync('deviceId') as string | undefined;
+  if (!deviceId) {
+    deviceId = `dev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    uni.setStorageSync('deviceId', deviceId);
+  }
+  return deviceId;
+}
+
 function saveAuth(result: AuthResult) {
   uni.setStorageSync('token', result.token);
   uni.setStorageSync('user', result.user);
 }
 
 export async function loginGuest() {
-  let deviceId = uni.getStorageSync('deviceId') as string | undefined;
-  if (!deviceId) {
-    deviceId = `dev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    uni.setStorageSync('deviceId', deviceId);
-  }
+  const deviceId = resolveDeviceId();
 
   const result = await apiRequest<AuthResult>('/auth/guest', 'POST', {
     deviceId,

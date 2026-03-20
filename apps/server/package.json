@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "nest build",
-    "start": "node dist/main",
-    "start:dev": "nest start --watch",
+    "start": "node dist/apps/server/src/main.js",
+    "start:dev": "pnpm build && node dist/apps/server/src/main.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "prisma:generate": "prisma generate",

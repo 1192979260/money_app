@@ -6,6 +6,7 @@
   "scripts": {
     "dev:server": "pnpm --filter @money-app/server start:dev",
     "dev:mobile": "pnpm --filter @money-app/mobile dev:h5",
+    "smoke:api": "bash scripts/smoke-api.sh",
     "prisma:generate": "pnpm --filter @money-app/server prisma:generate",
     "prisma:migrate": "pnpm --filter @money-app/server prisma:migrate",
     "build": "pnpm -r build",

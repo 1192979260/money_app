@@ -5,7 +5,8 @@
 ## 1. 创建 Supabase 免费数据库
 1. 注册并创建项目。
 2. 在 `Project Settings -> Database` 获取 `Connection string`。
-3. 记录 `DATABASE_URL`（建议使用 Direct 连接串）。
+3. 记录 `DATABASE_URL`。
+4. Render 建议优先使用 Supabase Transaction Pooler 连接串（`...pooler.supabase.com:6543`）。
 
 ## 2. 部署后端到 Render（免费）
 仓库已提供：
@@ -26,7 +27,9 @@
 
 说明：
 - 该配置默认 `STT_PROVIDER=openai`，避免云端依赖 `faster-whisper + ffmpeg`。
-- 容器启动命令已包含 `prisma migrate deploy`。
+- 容器启动命令当前仅启动服务，不再自动执行迁移。
+- 首次上线或每次 schema 变更后，请手动执行一次迁移：
+  - `DATABASE_URL='<你的连接串>' pnpm --filter @money-app/server exec prisma migrate deploy`
 
 ## 3. 部署前端到 Cloudflare Pages（免费）
 1. 在 Cloudflare Pages 里连接本仓库。
@@ -46,6 +49,10 @@
 2. 新建账单并保存成功。
 3. 账单列表能加载。
 4. 语音转写可用（依赖 `OPENAI_API_KEY`）。
+5. 最少做一次接口冒烟：
+   - `POST /v1/auth/guest`
+   - `POST /v1/chat-ledger/start`
+   - `GET /v1/ledger`
 
 ## 6. 免费层注意事项
 - Render 免费实例会休眠，首次请求有冷启动延迟。

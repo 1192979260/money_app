@@ -386,7 +386,9 @@ async function onConfirmOccurredAt() {
   const selectedDate = new Date(occurredYear.value, occurredMonth.value - 1, occurredDay.value, 12, 0, 0);
   const now = new Date();
   const minDate = new Date(2026, 0, 1, 0, 0, 0);
-  if (selectedDate < minDate || selectedDate > now) {
+  const selectedDateOnly = new Date(occurredYear.value, occurredMonth.value - 1, occurredDay.value, 0, 0, 0, 0);
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  if (selectedDate < minDate || selectedDateOnly > todayOnly) {
     uni.showToast({ title: '日期超出可选范围', icon: 'none' });
     return;
   }
