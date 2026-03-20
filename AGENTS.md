@@ -652,3 +652,15 @@
   - 现改为 `selectedDateOnly <= todayOnly`，当天任意时段均可正常确认
 - 验证：
   - `pnpm --filter @money-app/mobile build` 通过
+
+### 2026-03-20 - Feature Update 60
+- 修复线上 H5 API 地址错误回退到 `:3000` 的问题：
+  - 文件：`apps/mobile/src/services/http.ts`
+  - 新增 `DEFAULT_REMOTE_API_BASE=https://money-app-api-fi9k.onrender.com`
+  - API 解析策略调整为：
+    1. 优先 `uni.getStorageSync('apiBase')`
+    2. 其次 `VITE_API_BASE`
+    3. 若当前域名是本地（`localhost/127.0.0.1/0.0.0.0`）才回退 `:3000`
+    4. 其他线上域名统一回退 Render API 域名
+- 结果：
+  - 避免 Cloudflare Pages 域名被错误拼接成 `https://*.pages.dev:3000` 导致超时

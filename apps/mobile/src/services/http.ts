@@ -4,6 +4,8 @@ function normalizeApiBase(base: string) {
   return /\/v1$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
 }
 
+const DEFAULT_REMOTE_API_BASE = 'https://money-app-api-fi9k.onrender.com';
+
 function resolveApiBase() {
   const stored = (uni.getStorageSync('apiBase') as string | undefined)?.trim();
   if (stored) return normalizeApiBase(stored);
@@ -12,10 +14,18 @@ function resolveApiBase() {
   if (envBase) return normalizeApiBase(envBase);
 
   if (typeof window !== 'undefined' && window.location?.hostname) {
-    return normalizeApiBase(`${window.location.protocol}//${window.location.hostname}:3000`);
+    const hostname = window.location.hostname.toLowerCase();
+    const isLocalhost =
+      hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
+
+    if (isLocalhost) {
+      return normalizeApiBase(`${window.location.protocol}//${window.location.hostname}:3000`);
+    }
+
+    return normalizeApiBase(DEFAULT_REMOTE_API_BASE);
   }
 
-  return normalizeApiBase('http://localhost:3000');
+  return normalizeApiBase(DEFAULT_REMOTE_API_BASE);
 }
 
 const API_BASE = resolveApiBase();
