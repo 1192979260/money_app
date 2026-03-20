@@ -664,3 +664,14 @@
     4. 其他线上域名统一回退 Render API 域名
 - 结果：
   - 避免 Cloudflare Pages 域名被错误拼接成 `https://*.pages.dev:3000` 导致超时
+
+### 2026-03-20 - Feature Update 61
+- 修复 Render + Supabase pooler 触发 Prisma prepared statement 冲突导致的 500：
+  - 文件：`apps/server/src/prisma/prisma.service.ts`
+  - 新增 `normalizeDatabaseUrl`，当检测到 Supabase pooler（`*.pooler.supabase.com:6543`）时自动补齐：
+    - `pgbouncer=true`
+    - `connection_limit=1`
+    - `sslmode=require`
+  - 通过 `PrismaClient` `datasources.db.url` 覆盖运行时连接串，避免手工环境变量遗漏导致线上故障
+- 结果：
+  - 修复 `auth/guest`、`chat-ledger/start`、`ledger` 查询阶段出现的 `42P05 prepared statement already exists`
