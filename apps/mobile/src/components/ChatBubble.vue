@@ -1,12 +1,15 @@
 <template>
   <view :class="['bubble-row', role === 'user' ? 'user' : 'assistant']">
     <view :class="['bubble', role === 'user' ? 'bubble-user' : 'bubble-assistant', 'jelly-enter']">
-      <text class="bubble-text">{{ text }}</text>
+      <text v-if="role === 'user'" class="bubble-text">{{ text }}</text>
+      <MarkdownText v-else :text="text" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import MarkdownText from '@/components/MarkdownText.vue';
+
 defineProps<{
   role: 'user' | 'assistant';
   text: string;

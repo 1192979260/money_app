@@ -30,12 +30,20 @@ function resolveApiBase() {
 
 const API_BASE = resolveApiBase();
 
+export function getApiBase() {
+  return API_BASE;
+}
+
+export function getAuthToken() {
+  return (uni.getStorageSync('token') as string | undefined) || '';
+}
+
 export async function apiRequest<T>(
   path: string,
   method: 'GET' | 'POST' | 'DELETE' = 'GET',
   data?: Record<string, unknown>
 ): Promise<T> {
-  const token = uni.getStorageSync('token') as string | undefined;
+  const token = getAuthToken();
   return new Promise((resolve, reject) => {
     uni.request({
       url: `${API_BASE}${path}`,

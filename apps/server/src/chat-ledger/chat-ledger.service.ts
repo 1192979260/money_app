@@ -53,7 +53,16 @@ export class ChatLedgerService {
     };
   }
 
-  async handleTextMessage(userId: string, draftId: string | undefined, message: string) {
+  async handleTextMessage(
+    userId: string,
+    draftId: string | undefined,
+    message: string,
+    mode: 'ledger' | 'chat' = 'chat'
+  ) {
+    if (!draftId && mode === 'chat') {
+      return this.handleLedgerAnalysisChat(userId, message);
+    }
+
     if (!draftId) {
       return this.createOrUpdateDraft(userId, message);
     }
@@ -86,6 +95,87 @@ export class ChatLedgerService {
       slotValues: updated.slotValues,
       assistantReply: updated.lastQuestion
     };
+  }
+
+  async streamLedgerAnalysisChat(userId: string, message: string, onDelta: (delta: string) => void) {
+    const ledgerContext = await this.buildLedgerAnalysisContext(userId);
+    const assistantReply = await this.openAiService.streamLedgerChatReply(message, ledgerContext, onDelta);
+    return {
+      draftId: '',
+      status: 'DRAFT',
+      missingSlots: [],
+      slotValues: {},
+      assistantReply
+    };
+  }
+
+  private async handleLedgerAnalysisChat(userId: string, message: string) {
+    const ledgerContext = await this.buildLedgerAnalysisContext(userId);
+    const assistantReply = await this.openAiService.generateLedgerChatReply(message, ledgerContext);
+    return {
+      draftId: '',
+      status: 'DRAFT',
+      missingSlots: [],
+      slotValues: {},
+      assistantReply
+    };
+  }
+
+  private async buildLedgerAnalysisContext(userId: string) {
+    const rows = await this.prisma.ledgerEntry.findMany({
+      where: { userId, status: 'CONFIRMED' },
+      orderBy: [{ occurredAt: 'desc' }],
+      take: 120,
+      select: {
+        amount: true,
+        majorType: true,
+        platformTags: true,
+        usageType: true,
+        reason: true,
+        note: true,
+        occurredAt: true
+      }
+    });
+
+    if (!rows.length) {
+      return JSON.stringify({
+        summary: {
+          totalRecords: 0,
+          incomeTotal: 0,
+          expenseTotal: 0
+        },
+        recentEntries: []
+      });
+    }
+
+    const recentEntries = rows.slice(0, 80).map((row) => ({
+      amount: Number(row.amount),
+      majorType: row.majorType,
+      platformTags: row.platformTags,
+      usageType: row.usageType,
+      reason: row.reason,
+      note: row.note,
+      occurredAt: row.occurredAt.toISOString()
+    }));
+
+    const summary = rows.reduce(
+      (acc, row) => {
+        const amount = Number(row.amount);
+        if (row.majorType === 'income') {
+          acc.incomeTotal += amount;
+        } else {
+          acc.expenseTotal += amount;
+        }
+        return acc;
+      },
+      {
+        totalRecords: rows.length,
+        incomeTotal: 0,
+        expenseTotal: 0
+      }
+    );
+
+    return JSON.stringify({ summary, recentEntries });
   }
 
   async patchDraft(userId: string, dto: PatchDraftDto) {

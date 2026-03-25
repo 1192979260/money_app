@@ -5,6 +5,7 @@ describe('ChatLedgerService', () => {
   const draftFindUnique = jest.fn();
   const draftUpdate = jest.fn();
   const entryCreate = jest.fn();
+  const entryFindMany = jest.fn();
 
   const prisma = {
     conversationDraft: {
@@ -12,13 +13,15 @@ describe('ChatLedgerService', () => {
       update: draftUpdate
     },
     ledgerEntry: {
-      create: entryCreate
+      create: entryCreate,
+      findMany: entryFindMany
     }
   } as any;
 
   const openAiService = {
     extractSlots: jest.fn(),
-    transcribeAudio: jest.fn()
+    transcribeAudio: jest.fn(),
+    generateLedgerChatReply: jest.fn()
   } as any;
 
   const service = new ChatLedgerService(prisma, openAiService);
@@ -89,5 +92,26 @@ describe('ChatLedgerService', () => {
     expect(entryCreate).toHaveBeenCalled();
     const data = entryCreate.mock.calls[0][0].data;
     expect(data.expenseNature).toBe('one_off');
+  });
+
+  it('should route no-draft message to analysis chat mode', async () => {
+    entryFindMany.mockResolvedValue([
+      {
+        amount: 300,
+        majorType: 'income',
+        platformTags: ['微信'],
+        usageType: 'self',
+        reason: '工资',
+        note: null,
+        occurredAt: new Date('2026-03-01T08:00:00.000Z')
+      }
+    ]);
+    openAiService.generateLedgerChatReply.mockResolvedValue('这个月收入占比更高。');
+
+    const res = await service.handleTextMessage('u1', undefined, '本月收入支出如何？');
+
+    expect(openAiService.generateLedgerChatReply).toHaveBeenCalled();
+    expect(res.draftId).toBe('');
+    expect(res.assistantReply).toContain('收入占比');
   });
 });

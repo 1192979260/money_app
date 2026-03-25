@@ -2,39 +2,36 @@
   <view class="page">
     <view class="header glass-card">
       <view class="header-top">
-        <text class="title">语音速记账</text>
-        <button class="start-btn" @click="onStartConversation">新建账单</button>
+        <text class="title">钱呢</text>
+        <view class="header-actions">
+          <button class="start-btn secondary" @click="onStartChatSession">新建闲聊</button>
+          <button class="start-btn" @click="onStartConversation">新建账单</button>
+        </view>
       </view>
-      <text class="subtitle">像聊天一样记账，信息补齐后再入库</text>
+      <text class="subtitle">记一笔，理一笔，钱都去哪儿了</text>
     </view>
 
     <scroll-view
       class="chat-list glass-card"
       scroll-y
-      :scroll-into-view="scrollIntoViewId"
-      scroll-with-animation
+      :scroll-top="chatScrollTop"
+      :scroll-with-animation="!chat.isStreaming"
       :style="{ paddingBottom: chatListPaddingBottom }"
     >
       <view v-for="item in chat.messages" :id="`msg-${item.id}`" :key="item.id">
         <ChatBubble :role="item.role" :text="item.text" />
       </view>
-      <view v-if="!chat.messages.length" class="empty">按住说话，开始第一笔语音记账</view>
+      <view v-if="!chat.messages.length" class="empty">开始第一笔记账</view>
     </scroll-view>
 
     <view class="input-area glass-card">
-      <view class="entry-row" v-if="!voiceMode">
-        <button class="mode-btn" @click="voiceMode = true">🎤</button>
+      <view class="entry-row">
         <view class="input-shell">
           <input v-model="text" class="text-input" placeholder="输入补充信息，例如：今天午饭 28 元" />
         </view>
         <button class="send-btn" @click="onSend" aria-label="发送">
           <text class="send-icon">➤</text>
         </button>
-      </view>
-
-      <view class="entry-row" v-else>
-        <button class="mode-btn" @click="voiceMode = false">⌨️</button>
-        <VoiceButton block @recorded="onVoice" />
       </view>
 
       <view
@@ -94,16 +91,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch, nextTick } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import AppTabBar from '@/components/AppTabBar.vue';
 import ChatBubble from '@/components/ChatBubble.vue';
-import VoiceButton from '@/components/VoiceButton.vue';
 import { useChatStore } from '@/store/chat';
 import { useUserStore } from '@/store/user';
 
 const text = ref('');
-const voiceMode = ref(false);
-const scrollIntoViewId = ref('');
+const chatScrollTop = ref(0);
+const autoScrollTimer = ref<number | null>(null);
 const confirmModalVisible = ref(false);
 const selectedPlatform = ref('');
 const forceRemarkChoice = ref(false);
@@ -212,16 +208,38 @@ const occurredDayOptions = computed(() => {
   return Array.from({ length: maxDay }, (_, i) => i + 1);
 });
 
+function scheduleScrollToBottom() {
+  if (autoScrollTimer.value) {
+    clearTimeout(autoScrollTimer.value);
+  }
+  autoScrollTimer.value = setTimeout(async () => {
+    await nextTick();
+    chatScrollTop.value += 100000;
+  }, 80) as unknown as number;
+}
+
 onMounted(async () => {
   await user.ensureLogin();
 });
 
+onUnmounted(() => {
+  if (autoScrollTimer.value) {
+    clearTimeout(autoScrollTimer.value);
+  }
+});
+
 watch(
   () => chat.messages.length,
-  async () => {
-    await nextTick();
-    const last = chat.messages[chat.messages.length - 1];
-    scrollIntoViewId.value = last ? `msg-${last.id}` : '';
+  () => {
+    scheduleScrollToBottom();
+  },
+  { immediate: true }
+);
+
+watch(
+  () => chat.messages[chat.messages.length - 1]?.text,
+  () => {
+    scheduleScrollToBottom();
   },
   { immediate: true }
 );
@@ -249,20 +267,6 @@ watch(
     }
   }
 );
-
-async function onVoice(base64: string) {
-  uni.showLoading({ title: '转写中...' });
-  try {
-    const transcribedText = (await chat.onVoice(base64))?.trim();
-    if (!transcribedText) {
-      uni.showToast({ title: '未识别到语音内容', icon: 'none' });
-      return;
-    }
-    await chat.onText(transcribedText);
-  } finally {
-    uni.hideLoading();
-  }
-}
 
 async function onSend() {
   if (!text.value.trim()) return;
@@ -293,6 +297,13 @@ async function onStartConversation() {
   await user.ensureLogin();
   forceRemarkChoice.value = false;
   await chat.quickStartConversation();
+}
+
+async function onStartChatSession() {
+  await user.ensureLogin();
+  forceRemarkChoice.value = false;
+  confirmModalVisible.value = false;
+  chat.clearConversation();
 }
 
 function isSlotOptionActive(value: string) {
@@ -422,6 +433,12 @@ async function onConfirmOccurredAt() {
   gap: 12rpx;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
 .title {
   font-family: var(--title-font);
   font-size: 42rpx;
@@ -437,8 +454,7 @@ async function onConfirmOccurredAt() {
 }
 
 .start-btn {
-  height: 58rpx;
-  line-height: 58rpx;
+  min-height: 58rpx;
   padding: 0 20rpx;
   border: 1px solid var(--border-strong);
   border-radius: 999rpx;
@@ -447,6 +463,19 @@ async function onConfirmOccurredAt() {
   font-size: 22rpx;
   font-weight: 700;
   box-shadow: 0 8rpx 16rpx rgba(143, 101, 27, 0.28);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.start-btn.secondary {
+  background: linear-gradient(145deg, rgba(215, 165, 69, 0.2), rgba(213, 161, 67, 0.34));
+  color: var(--text-primary);
+}
+
+.start-btn::after {
+  border: none;
 }
 
 .chat-list {
@@ -495,21 +524,9 @@ async function onConfirmOccurredAt() {
 
 .entry-row {
   display: grid;
-  grid-template-columns: 78rpx 1fr 78rpx;
+  grid-template-columns: 1fr 78rpx;
   align-items: center;
   gap: 10rpx;
-}
-
-.mode-btn {
-  width: 78rpx;
-  height: 78rpx;
-  line-height: 78rpx;
-  border-radius: 999rpx;
-  border: 1px solid var(--border-soft);
-  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.02));
-  color: var(--text-primary);
-  font-size: 30rpx;
-  padding: 0;
 }
 
 .input-shell {

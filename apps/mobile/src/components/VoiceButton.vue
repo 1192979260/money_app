@@ -8,7 +8,7 @@
     @mouseup.prevent="endPress"
     @mouseleave.prevent="endPress"
   >
-    {{ isPressing ? '松开结束' : '按住说话' }}
+    {{ isPressing ? '松开结束' : '按住录入' }}
   </button>
 </template>
 

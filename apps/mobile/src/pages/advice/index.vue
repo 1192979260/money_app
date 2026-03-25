@@ -23,7 +23,7 @@
 
     <view :class="['result', 'glass-card', loading ? 'is-busy' : '']">
       <text class="label">建议内容</text>
-      <scroll-view class="result-scroll" scroll-y :scroll-into-view="scrollToId" scroll-with-animation>
+      <scroll-view class="result-scroll" scroll-y :scroll-top="adviceScrollTop" :scroll-with-animation="!loading">
         <view v-if="loading" class="loading-panel">
           <view class="shimmer-line l1" />
           <view class="shimmer-line l2" />
@@ -31,7 +31,8 @@
           <view class="shimmer-line l4" />
           <view class="shimmer-line l5" />
         </view>
-        <text v-else class="text">{{ adviceText || '点击“生成建议”后展示内容' }}</text>
+        <MarkdownText v-else-if="adviceText" class="text" :text="adviceText" />
+        <text v-else class="text">点击“生成建议”后展示内容</text>
         <view id="advice-tail" class="scroll-tail" />
       </scroll-view>
     </view>
@@ -41,9 +42,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import AppTabBar from '@/components/AppTabBar.vue';
-import { generateAdvice } from '@/services/advice';
+import MarkdownText from '@/components/MarkdownText.vue';
+import { generateAdvice, generateAdviceStream, getLatestAdvice } from '@/services/advice';
 import { useUserStore } from '@/store/user';
 
 const user = useUserStore();
@@ -59,7 +61,8 @@ const monthKeyOptions = yearOptions.flatMap((year) =>
 const periodKey = ref(`${currentYear}-${String(currentMonth).padStart(2, '0')}`);
 const adviceText = ref('');
 const loading = ref(false);
-const scrollToId = ref('');
+const adviceScrollTop = ref(0);
+const autoScrollTimer = ref<number | null>(null);
 const periodLabel = computed(() => (periodType.value === 'month' ? '月度' : '年度'));
 const periodKeyOptions = computed(() => (periodType.value === 'month' ? monthKeyOptions : yearOptions));
 const periodKeyLabel = computed(() => {
@@ -82,18 +85,66 @@ function onPeriodKeyChange(e: { detail: { value: string } }) {
   periodKey.value = periodKeyOptions.value[idx] || periodKey.value;
 }
 
+function scheduleAdviceScrollToBottom() {
+  if (autoScrollTimer.value) {
+    clearTimeout(autoScrollTimer.value);
+  }
+  autoScrollTimer.value = setTimeout(async () => {
+    await nextTick();
+    adviceScrollTop.value += 100000;
+  }, 80) as unknown as number;
+}
+
+onMounted(async () => {
+  try {
+    await user.ensureLogin();
+    const latest = await getLatestAdvice();
+    if (!latest?.adviceText) return;
+    adviceText.value = latest.adviceText;
+    if (latest.periodType === 'month' || latest.periodType === 'year') {
+      periodType.value = latest.periodType;
+    }
+    if (latest.periodKey) {
+      periodKey.value = latest.periodKey;
+    }
+  } catch (_error) {
+    // ignore init failure and allow manual generation
+  }
+});
+
+onUnmounted(() => {
+  if (autoScrollTimer.value) {
+    clearTimeout(autoScrollTimer.value);
+  }
+});
+
+watch(
+  () => adviceText.value,
+  () => {
+    if (!loading.value) return;
+    scheduleAdviceScrollToBottom();
+  }
+);
+
 async function run() {
   if (loading.value) return;
   loading.value = true;
   try {
     await user.ensureLogin();
-    const res = await generateAdvice(periodType.value, periodKey.value);
-    adviceText.value = res.adviceText;
+    adviceText.value = '';
+    try {
+      const res = await generateAdviceStream(periodType.value, periodKey.value, (delta) => {
+        adviceText.value += delta;
+      });
+      if (!res) {
+        throw new Error('empty stream response');
+      }
+    } catch (_error) {
+      const res = await generateAdvice(periodType.value, periodKey.value);
+      adviceText.value = res.adviceText;
+    }
     await nextTick();
-    scrollToId.value = 'advice-tail';
-    setTimeout(() => {
-      scrollToId.value = '';
-    }, 220);
+    adviceScrollTop.value += 100000;
   } finally {
     loading.value = false;
   }

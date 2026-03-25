@@ -1,11 +1,11 @@
 {
-  "name": "voice-money-app",
+  "name": "money-app",
   "appid": "__UNI__MONEY_APP__",
-  "description": "个人语音记账",
+  "description": "个人记账助手 钱呢",
   "versionName": "0.1.0",
   "versionCode": "101",
   "h5": {
-    "title": "语音记账"
+    "title": "钱呢"
   },
   "mp-weixin": {
     "appid": "",

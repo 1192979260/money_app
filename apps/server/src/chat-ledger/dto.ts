@@ -11,6 +11,10 @@ export class MessageInputDto {
   @IsString()
   draftId?: string;
 
+  @IsOptional()
+  @IsString()
+  mode?: 'ledger' | 'chat';
+
   @IsString()
   message!: string;
 }

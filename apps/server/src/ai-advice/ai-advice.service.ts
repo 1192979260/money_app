@@ -32,6 +32,57 @@ export class AiAdviceService {
     };
   }
 
+  async streamGenerate(
+    userId: string,
+    periodType: 'month' | 'year',
+    periodKey: string,
+    onDelta: (delta: string) => void
+  ) {
+    const snapshot = await this.buildSnapshot(userId, periodType, periodKey);
+    const advice = await this.openAiService.streamGenerateAdvice(
+      snapshot,
+      periodType === 'month' ? '月度' : '年度',
+      onDelta
+    );
+
+    const report = await this.prisma.adviceReport.create({
+      data: {
+        userId,
+        periodType,
+        periodKey,
+        inputSnapshot: snapshot,
+        adviceText: advice
+      }
+    });
+
+    return {
+      id: report.id,
+      periodType: report.periodType,
+      periodKey: report.periodKey,
+      adviceText: report.adviceText,
+      createdAt: report.createdAt.toISOString()
+    };
+  }
+
+  async latest(userId: string) {
+    const report = await this.prisma.adviceReport.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!report) {
+      return null;
+    }
+
+    return {
+      id: report.id,
+      periodType: report.periodType,
+      periodKey: report.periodKey,
+      adviceText: report.adviceText,
+      createdAt: report.createdAt.toISOString()
+    };
+  }
+
   private async buildSnapshot(userId: string, periodType: 'month' | 'year', periodKey: string) {
     if (periodType === 'year') {
       const year = Number(periodKey);

@@ -6,7 +6,7 @@
     },
     {
       "path": "pages/chat/index",
-      "style": { "navigationBarTitleText": "语音记账" }
+      "style": { "navigationBarTitleText": "钱呢" }
     },
     {
       "path": "pages/ledger/index",

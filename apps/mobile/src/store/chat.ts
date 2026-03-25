@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { confirmDraft, patchDraft, sendMessage, startConversation, transcribeVoice } from '@/services/chat';
+import { confirmDraft, patchDraft, sendMessage, sendMessageStream, startConversation } from '@/services/chat';
 import type { ChatMessage } from '@/types/api';
 
 interface ChatState {
@@ -9,6 +9,7 @@ interface ChatState {
   slotValues: Record<string, unknown>;
   messages: ChatMessage[];
   lastRawText: string;
+  isStreaming: boolean;
 }
 
 const initialSnapshot = {
@@ -35,7 +36,8 @@ export const useChatStore = defineStore('chat', {
     missingSlots: initialSnapshot.missingSlots,
     slotValues: initialSnapshot.slotValues,
     messages: uni.getStorageSync('messages') || initialSnapshot.messages,
-    lastRawText: initialSnapshot.lastRawText
+    lastRawText: initialSnapshot.lastRawText,
+    isStreaming: false
   }),
   actions: {
     persist() {
@@ -47,12 +49,6 @@ export const useChatStore = defineStore('chat', {
         missingSlots: this.missingSlots,
         slotValues: this.slotValues
       });
-    },
-
-    async onVoice(audioBase64: string) {
-      const res = await transcribeVoice(audioBase64);
-      this.lastRawText = res.transcribedText || '';
-      return this.lastRawText;
     },
 
     async quickStartConversation() {
@@ -71,6 +67,50 @@ export const useChatStore = defineStore('chat', {
 
     async onText(message: string) {
       this.messages.push(createMsg('user', message));
+      if (!this.draftId) {
+        this.isStreaming = true;
+        const assistantId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        this.messages.push({
+          id: assistantId,
+          role: 'assistant',
+          text: ''
+        });
+        try {
+          const res = await sendMessageStream(message, (delta) => {
+            const target = this.messages.find((m) => m.id === assistantId);
+            if (!target) return;
+            target.text += delta;
+            this.persist();
+          });
+          if (res) {
+            this.draftId = res.draftId || '';
+            this.status = res.status || 'DRAFT';
+            this.missingSlots = res.missingSlots || [];
+            this.slotValues = res.slotValues || this.slotValues;
+            const target = this.messages.find((m) => m.id === assistantId);
+            if (target && !target.text && res.assistantReply) {
+              target.text = res.assistantReply;
+            }
+          }
+          this.persist();
+          return res;
+        } catch (_error) {
+          const fallback = await sendMessage(undefined, message);
+          const target = this.messages.find((m) => m.id === assistantId);
+          if (target) {
+            target.text = fallback.assistantReply;
+          }
+          this.draftId = fallback.draftId || '';
+          this.status = fallback.status || 'DRAFT';
+          this.missingSlots = fallback.missingSlots || [];
+          this.slotValues = fallback.slotValues || this.slotValues;
+          this.persist();
+          return fallback;
+        } finally {
+          this.isStreaming = false;
+        }
+      }
+
       const res = await sendMessage(this.draftId, message);
       this.draftId = res.draftId;
       this.status = res.status;
@@ -115,6 +155,7 @@ export const useChatStore = defineStore('chat', {
       this.slotValues = {};
       this.messages = [];
       this.lastRawText = initialSnapshot.lastRawText;
+      this.isStreaming = false;
       uni.removeStorageSync('draftId');
       uni.removeStorageSync('messages');
       uni.removeStorageSync('chatSnapshot');
