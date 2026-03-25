@@ -4,13 +4,15 @@ import { ChatLedgerService } from '../src/chat-ledger/chat-ledger.service';
 describe('ChatLedgerService', () => {
   const draftFindUnique = jest.fn();
   const draftUpdate = jest.fn();
+  const draftCreate = jest.fn();
   const entryCreate = jest.fn();
   const entryFindMany = jest.fn();
 
   const prisma = {
     conversationDraft: {
       findUnique: draftFindUnique,
-      update: draftUpdate
+      update: draftUpdate,
+      create: draftCreate
     },
     ledgerEntry: {
       create: entryCreate,
@@ -113,5 +115,30 @@ describe('ChatLedgerService', () => {
     expect(openAiService.generateLedgerChatReply).toHaveBeenCalled();
     expect(res.draftId).toBe('');
     expect(res.assistantReply).toContain('收入占比');
+  });
+
+  it('should auto switch to ledger flow for ledger-like chat message', async () => {
+    openAiService.extractSlots.mockResolvedValue({
+      amount: 28,
+      platformTags: ['饿了么'],
+      reason: '午饭'
+    });
+    draftCreate.mockResolvedValue({
+      id: 'd3',
+      status: ConversationStatus.COLLECTING,
+      missingSlots: ['majorType', 'occurredAt', 'usageType', 'needRemark'],
+      slotValues: {
+        amount: 28,
+        platformTags: ['饿了么'],
+        reason: '午饭'
+      },
+      lastQuestion: '这笔账单属于固定支出、额外支出还是收入？'
+    });
+
+    const res = await service.handleTextMessage('u1', undefined, '我刚刚花了28元买午饭', 'chat');
+
+    expect(draftCreate).toHaveBeenCalled();
+    expect((res as any).switchedToLedger).toBe(true);
+    expect(res.draftId).toBe('d3');
   });
 });

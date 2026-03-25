@@ -91,6 +91,9 @@ export const useChatStore = defineStore('chat', {
             if (target && !target.text && res.assistantReply) {
               target.text = res.assistantReply;
             }
+            if (res.switchedToLedger) {
+              uni.showToast({ title: '已切换到记账流程', icon: 'none' });
+            }
           }
           this.persist();
           return res;
@@ -104,6 +107,9 @@ export const useChatStore = defineStore('chat', {
           this.status = fallback.status || 'DRAFT';
           this.missingSlots = fallback.missingSlots || [];
           this.slotValues = fallback.slotValues || this.slotValues;
+          if (fallback.switchedToLedger) {
+            uni.showToast({ title: '已切换到记账流程', icon: 'none' });
+          }
           this.persist();
           return fallback;
         } finally {

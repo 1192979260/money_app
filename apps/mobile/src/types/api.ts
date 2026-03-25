@@ -3,7 +3,7 @@ export interface AuthResult {
   user: {
     id: string;
     displayName?: string;
-    loginType: 'wechat' | 'guest';
+    loginType: 'account' | 'wechat' | 'guest';
   };
 }
 
@@ -20,6 +20,7 @@ export interface DraftResponse {
   missingSlots: string[];
   slotValues: Record<string, unknown>;
   assistantReply: string;
+  switchedToLedger?: boolean;
 }
 
 export interface TranscribeResponse {

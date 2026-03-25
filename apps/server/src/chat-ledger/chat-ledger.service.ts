@@ -60,7 +60,7 @@ export class ChatLedgerService {
     mode: 'ledger' | 'chat' = 'chat'
   ) {
     if (!draftId && mode === 'chat') {
-      return this.handleLedgerAnalysisChat(userId, message);
+      return this.handleSmartChatMessage(userId, message);
     }
 
     if (!draftId) {
@@ -98,6 +98,15 @@ export class ChatLedgerService {
   }
 
   async streamLedgerAnalysisChat(userId: string, message: string, onDelta: (delta: string) => void) {
+    if (this.shouldSwitchToLedger(message)) {
+      const switched = await this.createOrUpdateDraft(userId, message);
+      onDelta(switched.assistantReply || '');
+      return {
+        ...switched,
+        switchedToLedger: true
+      };
+    }
+
     const ledgerContext = await this.buildLedgerAnalysisContext(userId);
     const assistantReply = await this.openAiService.streamLedgerChatReply(message, ledgerContext, onDelta);
     return {
@@ -105,7 +114,28 @@ export class ChatLedgerService {
       status: 'DRAFT',
       missingSlots: [],
       slotValues: {},
-      assistantReply
+      assistantReply,
+      switchedToLedger: false
+    };
+  }
+
+  private async handleSmartChatMessage(userId: string, message: string) {
+    if (this.shouldSwitchToLedger(message)) {
+      const switched = await this.createOrUpdateDraft(userId, message);
+      return {
+        ...switched,
+        switchedToLedger: true
+      };
+    }
+    const ledgerContext = await this.buildLedgerAnalysisContext(userId);
+    const assistantReply = await this.openAiService.generateLedgerChatReply(message, ledgerContext);
+    return {
+      draftId: '',
+      status: 'DRAFT',
+      missingSlots: [],
+      slotValues: {},
+      assistantReply,
+      switchedToLedger: false
     };
   }
 
@@ -119,6 +149,23 @@ export class ChatLedgerService {
       slotValues: {},
       assistantReply
     };
+  }
+
+  private shouldSwitchToLedger(message: string) {
+    const text = message.trim();
+    if (!text) return false;
+
+    const hasDirectLedgerIntent = /(记账|记一笔|入账|帮我记|记下这笔)/.test(text);
+    const hasTransactionAction = /(花了|花费|买了|付款|付了|赚了|到账|报销|转账|收了|消费了|收入了)/.test(text);
+    const extracted = heuristicExtractSlots(text);
+    const hasAmount = typeof extracted.amount === 'number' && Number.isFinite(extracted.amount);
+    const hasSlotSignal = Boolean(
+      extracted.majorType || extracted.reason || (Array.isArray(extracted.platformTags) && extracted.platformTags.length)
+    );
+
+    if (hasDirectLedgerIntent && (hasAmount || hasSlotSignal)) return true;
+    if (hasTransactionAction && hasAmount) return true;
+    return hasAmount && hasSlotSignal;
   }
 
   private async buildLedgerAnalysisContext(userId: string) {
