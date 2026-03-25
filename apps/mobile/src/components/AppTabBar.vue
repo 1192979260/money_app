@@ -54,6 +54,8 @@ function go(path: string) {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6rpx;
+  border: 2rpx solid var(--border-soft);
+  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.05));
 }
 
 .tab-item {
@@ -64,11 +66,13 @@ function go(path: string) {
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .tab-item.active {
-  background: #f1f7ff;
-  color: #547fcf;
+  background: linear-gradient(145deg, rgba(220, 174, 89, 0.24), rgba(213, 161, 67, 0.42));
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
 .icon {
@@ -80,5 +84,14 @@ function go(path: string) {
   margin-top: 5rpx;
   font-size: 23rpx;
   font-weight: 700;
+  font-family: var(--body-font);
+}
+
+@media (hover: hover) {
+  .tab-item:hover {
+    transform: translateY(-2rpx);
+    background: rgba(214, 168, 82, 0.16);
+    color: var(--text-primary);
+  }
 }
 </style>

@@ -33,6 +33,8 @@ defineProps<{
   padding: 18rpx 22rpx;
   color: var(--text-primary);
   box-sizing: border-box;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
 }
 
 .bubble-text {
@@ -46,6 +48,8 @@ defineProps<{
 .bubble-user {
   background: var(--bubble-user);
   border-top-right-radius: 12rpx;
+  color: #2a1902;
+  border-color: rgba(150, 111, 40, 0.34);
 }
 
 .bubble-assistant {

@@ -77,8 +77,9 @@ function reLogin() {
 }
 
 .title {
-  font-size: 34rpx;
-  font-weight: 800;
+  font-family: var(--title-font);
+  font-size: 40rpx;
+  font-weight: 700;
 }
 
 .line {
@@ -86,19 +87,25 @@ function reLogin() {
 }
 
 .tip {
-  color: #d56c89;
+  color: #d37d49;
   font-size: 24rpx;
 }
 
 .btn {
   border-radius: 16rpx;
-  border: none;
-  background: #74a8ff;
-  color: #fff;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(130deg, var(--accent), var(--accent-2));
+  color: #fff6e3;
   margin-top: 8rpx;
 }
 
 .bind {
-  background: #83d8bf;
+  background: linear-gradient(130deg, #cba05b, #9c7127);
+}
+
+@media (hover: hover) {
+  .btn:hover {
+    transform: translateY(-2rpx);
+  }
 }
 </style>

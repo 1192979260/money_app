@@ -16,6 +16,7 @@
 - `apps/mobile`：跨端客户端（H5/微信小程序）
 - `apps/server`：API 服务
 - `packages/shared`：前后端共享类型
+- `PRODUCT.md`：产品文档（功能、流程、规则、接口全览）
 
 ## 快速开始
 1. 安装依赖
@@ -43,6 +44,8 @@ HTTP_BODY_LIMIT=15mb
 ```bash
 pnpm --filter @money-app/server prisma:generate
 pnpm --filter @money-app/server prisma:migrate
+
+docker start money-app-postgres
 ```
 
 5. 启动后端

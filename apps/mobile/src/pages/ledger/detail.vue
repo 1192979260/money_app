@@ -148,17 +148,18 @@ function formatDate(iso: string) {
 }
 
 .title {
-  font-size: 34rpx;
-  font-weight: 800;
+  font-family: var(--title-font);
+  font-size: 40rpx;
+  font-weight: 700;
 }
 
 .delete-btn {
   height: 56rpx;
   line-height: 56rpx;
-  border: none;
+  border: 1px solid var(--border-soft);
   border-radius: 999rpx;
-  background: #ff7a96;
-  color: #fff;
+  background: linear-gradient(130deg, #c85b5b, #ad4141);
+  color: #fff4ea;
   padding: 0 20rpx;
   font-size: 22rpx;
 }
@@ -171,8 +172,9 @@ function formatDate(iso: string) {
 }
 
 .history-title {
-  font-size: 28rpx;
-  font-weight: 700;
+  font-family: var(--title-font);
+  font-size: 32rpx;
+  font-weight: 600;
   display: block;
   margin-bottom: 14rpx;
 }
@@ -213,11 +215,14 @@ function formatDate(iso: string) {
 .bubble-user {
   background: var(--bubble-user);
   border-top-right-radius: 10rpx;
+  color: #2a1902;
+  border: 1px solid rgba(150, 111, 40, 0.34);
 }
 
 .bubble-assistant {
   background: var(--bubble-bot);
   border-top-left-radius: 10rpx;
+  border: 1px solid var(--border-soft);
 }
 
 .empty {

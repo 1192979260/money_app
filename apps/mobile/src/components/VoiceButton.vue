@@ -148,28 +148,27 @@ function endPress() {
 
 <style scoped>
 .voice-btn {
-  border: none;
+  border: 1px solid var(--border-soft);
   border-radius: 999rpx;
-  background: #ffffff;
-  color: #5a6787;
-  border: 2rpx solid #e6ecff;
+  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.02));
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 28rpx;
   height: 82rpx;
   line-height: 82rpx;
+  box-shadow: var(--shadow-soft);
+  font-family: var(--body-font);
 }
 
 .voice-btn.block {
   width: 100%;
-  background: #f4f7ff;
-  border: 2rpx solid #dfe7ff;
-  color: #fff;
-  color: #4f5f82;
+  background: linear-gradient(132deg, rgba(217, 173, 87, 0.16), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-strong);
 }
 
 .voice-btn.pressing {
-  background: #dde8ff;
-  border-color: #c8d8ff;
-  color: #405481;
+  background: linear-gradient(130deg, var(--accent) 0%, var(--accent-2) 100%);
+  border-color: var(--border-strong);
+  color: #fff7e7;
 }
 </style>

@@ -17,7 +17,10 @@
 
     <view class="result glass-card">
       <text class="label">建议内容</text>
-      <text class="text">{{ adviceText || '点击“生成建议”后展示内容' }}</text>
+      <scroll-view class="result-scroll" scroll-y>
+        <text class="text">{{ adviceText || '点击“生成建议”后展示内容' }}</text>
+        <view class="scroll-tail" />
+      </scroll-view>
     </view>
 
     <AppTabBar current="advice" />
@@ -73,20 +76,24 @@ async function run() {
 
 <style scoped>
 .page {
-  min-height: 100vh;
-  padding: 20rpx 20rpx 190rpx;
+  height: 100vh;
+  padding: 20rpx 20rpx calc(env(safe-area-inset-bottom) + 128rpx);
   background: var(--bg-base);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  overflow: hidden;
 }
 
 .head {
   padding: 20rpx;
-  margin-bottom: 14rpx;
 }
 
 .title {
-  font-size: 34rpx;
-  font-weight: 800;
+  font-family: var(--title-font);
+  font-size: 40rpx;
+  font-weight: 700;
 }
 
 .desc {
@@ -100,7 +107,6 @@ async function run() {
   padding: 18rpx;
   display: grid;
   gap: 12rpx;
-  margin-bottom: 14rpx;
 }
 
 .pick {
@@ -109,30 +115,55 @@ async function run() {
   align-items: center;
   padding: 0 16rpx;
   border-radius: 16rpx;
-  background: #f7f9ff;
-  border: 2rpx solid #e8eeff;
+  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-soft);
 }
 
 .btn {
   border-radius: 16rpx;
   height: 78rpx;
   line-height: 78rpx;
+  border: 1px solid var(--border-strong);
 }
 
 .result {
+  flex: 1;
+  min-height: 0;
   padding: 20rpx;
-  background: #f7fff6;
+  background: linear-gradient(145deg, var(--bg-surface), rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
 }
 
 .label {
-  font-weight: 700;
+  font-family: var(--title-font);
+  font-weight: 600;
   margin-bottom: 10rpx;
   display: block;
+  font-size: 32rpx;
 }
 
 .text {
+  display: block;
   line-height: 1.8;
   color: var(--text-primary);
   word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.result-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.scroll-tail {
+  height: 24rpx;
+}
+
+@media (hover: hover) {
+  .btn:hover {
+    transform: translateY(-2rpx);
+  }
 }
 </style>

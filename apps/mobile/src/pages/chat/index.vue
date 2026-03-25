@@ -423,8 +423,9 @@ async function onConfirmOccurredAt() {
 }
 
 .title {
-  font-size: 34rpx;
-  font-weight: 800;
+  font-family: var(--title-font);
+  font-size: 42rpx;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -439,12 +440,13 @@ async function onConfirmOccurredAt() {
   height: 58rpx;
   line-height: 58rpx;
   padding: 0 20rpx;
-  border: none;
+  border: 1px solid var(--border-strong);
   border-radius: 999rpx;
-  background: #7caeff;
-  color: #fff;
+  background: linear-gradient(130deg, var(--accent), var(--accent-2));
+  color: #fff5df;
   font-size: 22rpx;
   font-weight: 700;
+  box-shadow: 0 8rpx 16rpx rgba(143, 101, 27, 0.28);
 }
 
 .chat-list {
@@ -503,17 +505,17 @@ async function onConfirmOccurredAt() {
   height: 78rpx;
   line-height: 78rpx;
   border-radius: 999rpx;
-  border: 2rpx solid #e5ebff;
-  background: #f7f9ff;
-  color: #5a6a8f;
+  border: 1px solid var(--border-soft);
+  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.02));
+  color: var(--text-primary);
   font-size: 30rpx;
   padding: 0;
 }
 
 .input-shell {
   height: 78rpx;
-  background: #f7f9ff;
-  border: 2rpx solid #e8eeff;
+  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-soft);
   border-radius: 999rpx;
   display: flex;
   align-items: center;
@@ -524,23 +526,25 @@ async function onConfirmOccurredAt() {
   width: 100%;
   height: 100%;
   background: transparent;
+  color: var(--text-primary);
+  font-family: var(--body-font);
 }
 
 .send-btn {
   width: 78rpx;
   height: 78rpx;
   line-height: 78rpx;
-  border: none;
+  border: 1px solid var(--border-strong);
   border-radius: 50%;
-  background: #7baeff;
-  color: #fff;
+  background: linear-gradient(130deg, var(--accent), var(--accent-2));
+  color: #fff6e7;
   font-size: 30rpx;
   font-weight: 700;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 16rpx rgba(101, 146, 255, 0.32);
+  box-shadow: 0 12rpx 24rpx rgba(143, 101, 27, 0.34);
 }
 
 .send-icon {
@@ -574,10 +578,10 @@ async function onConfirmOccurredAt() {
 
 .date-pick {
   min-height: 58rpx;
-  border: 2rpx solid #dfe8ff;
+  border: 1px solid var(--border-soft);
   border-radius: 16rpx;
-  background: #f6f8ff;
-  color: #5a6a8f;
+  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.02));
+  color: var(--text-primary);
   font-size: 22rpx;
   display: flex;
   align-items: center;
@@ -587,21 +591,21 @@ async function onConfirmOccurredAt() {
 
 .date-confirm-btn {
   grid-column: 1 / span 3;
-  border: none;
+  border: 1px solid var(--border-strong);
   border-radius: 16rpx;
   height: 58rpx;
   line-height: 58rpx;
-  background: #74a8ff;
-  color: #fff;
+  background: linear-gradient(130deg, var(--accent), var(--accent-2));
+  color: #fff5df;
   font-size: 22rpx;
   font-weight: 700;
 }
 
 .slot-tag {
-  border: 2rpx solid #dfe8ff;
+  border: 1px solid var(--border-soft);
   border-radius: 999rpx;
-  background: #f6f8ff;
-  color: #5a6a8f;
+  background: linear-gradient(145deg, var(--bg-elevated), rgba(255, 255, 255, 0.02));
+  color: var(--text-primary);
   font-size: 22rpx;
   padding: 0 18rpx;
   height: 58rpx;
@@ -609,15 +613,15 @@ async function onConfirmOccurredAt() {
 }
 
 .slot-tag.active {
-  background: #dff0ff;
-  border-color: #96c8ff;
-  color: #2c5d99;
+  background: linear-gradient(145deg, rgba(215, 165, 69, 0.24), rgba(213, 161, 67, 0.4));
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 .modal-mask {
   position: fixed;
   inset: 0;
-  background: rgba(20, 30, 48, 0.25);
+  background: rgba(18, 14, 9, 0.42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -632,7 +636,8 @@ async function onConfirmOccurredAt() {
 }
 
 .modal-title {
-  font-size: 30rpx;
+  font-family: var(--title-font);
+  font-size: 34rpx;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -654,17 +659,26 @@ async function onConfirmOccurredAt() {
 }
 
 .modal-btn {
-  border: none;
+  border: 1px solid var(--border-strong);
   border-radius: 18rpx;
-  color: #fff;
+  color: #fff6e1;
   font-weight: 700;
 }
 
 .modal-btn.primary {
-  background: #74a8ff;
+  background: linear-gradient(130deg, var(--accent), var(--accent-2));
 }
 
 .modal-btn.secondary {
-  background: #98a5c4;
+  background: rgba(150, 140, 121, 0.52);
+}
+
+@media (hover: hover) {
+  .start-btn:hover,
+  .send-btn:hover,
+  .date-confirm-btn:hover,
+  .modal-btn.primary:hover {
+    transform: translateY(-2rpx);
+  }
 }
 </style>

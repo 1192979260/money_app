@@ -101,8 +101,9 @@ onMounted(load);
 }
 
 .title {
-  font-size: 34rpx;
-  font-weight: 800;
+  font-family: var(--title-font);
+  font-size: 40rpx;
+  font-weight: 700;
 }
 
 .desc {
@@ -115,23 +116,26 @@ onMounted(load);
 .panel {
   margin-bottom: 14rpx;
   padding: 20rpx;
+  border: 1px solid var(--border-soft);
+  background: linear-gradient(145deg, var(--bg-surface), rgba(255, 255, 255, 0.04));
 }
 
 .pastel-a {
-  background: #fff3f9;
+  background: linear-gradient(140deg, rgba(216, 168, 79, 0.18), rgba(255, 255, 255, 0.02));
 }
 
 .pastel-b {
-  background: #edf8ff;
+  background: linear-gradient(140deg, rgba(169, 129, 58, 0.14), rgba(255, 255, 255, 0.02));
 }
 
 .pastel-c {
-  background: #f3f8ef;
+  background: linear-gradient(140deg, rgba(132, 104, 52, 0.18), rgba(255, 255, 255, 0.02));
 }
 
 .label {
-  font-size: 28rpx;
-  font-weight: 700;
+  font-family: var(--title-font);
+  font-size: 32rpx;
+  font-weight: 600;
   margin-bottom: 12rpx;
   display: block;
 }
@@ -143,13 +147,16 @@ onMounted(load);
 }
 
 .value-link {
-  color: #2f5fa6;
-  text-decoration: underline;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--border-strong);
+  padding-bottom: 2rpx;
 }
 
 .refresh {
   height: 82rpx;
   line-height: 82rpx;
   border-radius: 16rpx;
+  border: 1px solid var(--border-strong);
 }
 </style>
