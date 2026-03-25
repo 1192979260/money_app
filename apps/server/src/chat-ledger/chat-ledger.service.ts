@@ -1,8 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ConversationStatus, EntrySource, MajorType, Prisma, UsageType } from '@prisma/client';
+import { ConversationStatus, EntrySource, ExpenseNature, MajorType, Prisma, UsageType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenAiService } from '../common/openai.service';
-import { computeMissingSlots, heuristicExtractSlots, isValidReasonText, slotQuestion } from '../common/utils';
+import {
+  computeMissingSlots,
+  inferExpenseNature,
+  heuristicExtractSlots,
+  normalizeMajorType,
+  normalizeReasonText,
+  slotQuestion
+} from '../common/utils';
 import { ConfirmInputDto, PatchDraftDto } from './dto';
 import { SlotValues } from '@money-app/shared';
 
@@ -136,6 +143,7 @@ export class ChatLedgerService {
         amount: slotValues.amount!,
         currency: 'CNY',
         majorType: slotValues.majorType as MajorType,
+        expenseNature: this.resolveExpenseNature(slotValues),
         platformTags: slotValues.platformTags!,
         usageType: this.resolveUsageType(slotValues),
         reason: slotValues.reason!,
@@ -223,9 +231,15 @@ export class ChatLedgerService {
         merged.reason = current.reason;
       }
     }
-    if (!isValidReasonText(merged.reason)) {
-      merged.reason = current.reason;
-    }
+    const normalizedReason = normalizeReasonText(String(merged.reason || ''));
+    merged.reason = normalizedReason || current.reason;
+
+    merged.majorType = normalizeMajorType({
+      majorType: merged.majorType,
+      reason: merged.reason,
+      platformTags: merged.platformTags,
+      rawText: message
+    }) as SlotValues['majorType'];
 
     if (merged.usageType && !this.shouldAcceptUsageType(message, currentMissingSlot)) {
       merged.usageType = current.usageType;
@@ -245,7 +259,7 @@ export class ChatLedgerService {
     }
 
     if (currentMissingSlot === 'reason' && !merged.reason) {
-      merged.reason = trimmed;
+      merged.reason = normalizeReasonText(trimmed) || merged.reason || '';
     }
   }
 
@@ -303,6 +317,16 @@ export class ChatLedgerService {
     if (source === '老公') return 'husband';
     if (source === '老婆' || source === '本人') return 'self';
     return 'other';
+  }
+
+  private resolveExpenseNature(slotValues: SlotValues): ExpenseNature | null {
+    const value = inferExpenseNature({
+      majorType: slotValues.majorType,
+      amount: slotValues.amount,
+      reason: slotValues.reason,
+      platformTags: slotValues.platformTags
+    });
+    return value ? (value as ExpenseNature) : null;
   }
 
   private formatDateTime(input?: string) {

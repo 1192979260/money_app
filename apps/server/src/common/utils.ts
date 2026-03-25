@@ -37,6 +37,14 @@ const reasonControlWords = new Set([
   '收到'
 ]);
 
+const fixedMajorKeywords = ['房租', '房贷', '水电', '燃气', '物业', '学费', '保险', '月供', '宽带', '通讯费'];
+const extraMajorKeywords = ['外卖', '奶茶', '零食', '亲子乐园', '娱乐', '购物', '打车', '按摩椅', '咖啡'];
+const oneOffKeywords = ['亲子乐园', '大件', '维修', '旅游', '年费'];
+const ambiguousPrefixes = [/^(用途|原因|收入来源|备注)[:：\s]*/i];
+const leadingNoisePatterns = [
+  /^(确认(入账)?|好的?|ok(ay)?|嗯|收到|需要|不需要)[，,、\s]*/i
+];
+
 export function isValidReasonText(text: string | undefined | null) {
   const normalized = (text || '').trim().toLowerCase();
   if (!normalized) return false;
@@ -45,6 +53,63 @@ export function isValidReasonText(text: string | undefined | null) {
   if (/^金额[:：]?\s*[-+]?(\d+(?:\.\d{1,2})?)\s*(元|块|rmb|￥)?$/i.test(normalized)) return false;
   if (/^(现金|京东|淘宝|抖音|饿了么|叮咚买菜)$/.test(normalized)) return false;
   return true;
+}
+
+export function normalizeReasonText(text: string | undefined | null) {
+  let normalized = String(text || '').trim();
+  if (!normalized) return undefined;
+
+  for (const pattern of ambiguousPrefixes) {
+    normalized = normalized.replace(pattern, '').trim();
+  }
+  for (const pattern of leadingNoisePatterns) {
+    normalized = normalized.replace(pattern, '').trim();
+  }
+
+  normalized = normalized.replace(/[。！!，,\s]+$/g, '').trim();
+  if (!isValidReasonText(normalized)) return undefined;
+  return normalized;
+}
+
+export function normalizeMajorType(input: {
+  majorType?: SlotValues['majorType'];
+  reason?: string;
+  platformTags?: string[];
+  rawText?: string;
+}) {
+  if (input.majorType === 'income') return 'income' as MajorType;
+
+  const mergedText = `${input.rawText || ''} ${input.reason || ''}`.trim();
+  const platformText = (input.platformTags || []).join(' ');
+  const signal = `${mergedText} ${platformText}`;
+
+  if (fixedMajorKeywords.some((key) => signal.includes(key))) {
+    return 'fixed' as MajorType;
+  }
+  if (extraMajorKeywords.some((key) => signal.includes(key))) {
+    return 'extra' as MajorType;
+  }
+  if ((input.platformTags || []).includes('饿了么')) {
+    return 'extra' as MajorType;
+  }
+  return input.majorType as MajorType | undefined;
+}
+
+export function inferExpenseNature(input: {
+  majorType?: SlotValues['majorType'];
+  amount?: number;
+  reason?: string;
+  platformTags?: string[];
+  rawText?: string;
+}) {
+  if (input.majorType === 'income') return undefined;
+  const signal = `${input.rawText || ''} ${input.reason || ''} ${(input.platformTags || []).join(' ')}`.trim();
+
+  if (fixedMajorKeywords.some((key) => signal.includes(key))) return 'essential' as const;
+  if ((input.amount || 0) >= 500 || oneOffKeywords.some((key) => signal.includes(key))) return 'one_off' as const;
+  if (extraMajorKeywords.some((key) => signal.includes(key))) return 'optional' as const;
+  if ((input.platformTags || []).includes('饿了么')) return 'optional' as const;
+  return input.majorType === 'fixed' ? ('essential' as const) : ('optional' as const);
 }
 
 export function heuristicExtractSlots(text: string): Partial<SlotValues> {
@@ -85,8 +150,8 @@ export function heuristicExtractSlots(text: string): Partial<SlotValues> {
     extracted.remark = remarkMatch[1].trim();
   }
 
-  const reasonText = text.trim();
-  if (isValidReasonText(reasonText)) {
+  const reasonText = normalizeReasonText(text);
+  if (reasonText) {
     extracted.reason = reasonText;
   }
   // Only fill occurredAt when user explicitly provides a date,

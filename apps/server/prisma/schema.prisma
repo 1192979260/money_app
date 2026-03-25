@@ -26,6 +26,12 @@ enum EntrySource {
   text
 }
 
+enum ExpenseNature {
+  essential
+  optional
+  one_off
+}
+
 enum ConversationStatus {
   DRAFT
   COLLECTING
@@ -52,6 +58,7 @@ model LedgerEntry {
   amount       Decimal     @db.Decimal(10, 2)
   currency     String      @default("CNY")
   majorType    MajorType
+  expenseNature ExpenseNature?
   platformTags String[]
   usageType    UsageType
   reason       String

@@ -3,6 +3,7 @@ export type MajorType = 'fixed' | 'extra' | 'income';
 export type UsageType = 'family' | 'self' | 'child' | 'husband' | 'other';
 
 export type EntrySource = 'voice' | 'text';
+export type ExpenseNature = 'essential' | 'optional' | 'one_off';
 
 export type ConversationStatus = 'DRAFT' | 'COLLECTING' | 'CONFIRMING' | 'CONFIRMED';
 
@@ -43,6 +44,7 @@ export interface LedgerEntryDTO {
   amount: number;
   currency: 'CNY';
   majorType: MajorType;
+  expenseNature?: ExpenseNature;
   platformTags: string[];
   usageType: UsageType;
   reason: string;

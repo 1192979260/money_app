@@ -35,6 +35,7 @@ export interface LedgerEntry {
   id: string;
   amount: number;
   majorType: 'fixed' | 'extra' | 'income';
+  expenseNature?: 'essential' | 'optional' | 'one_off';
   platformTags: string[];
   usageType: 'family' | 'self' | 'child' | 'husband' | 'other';
   reason: string;

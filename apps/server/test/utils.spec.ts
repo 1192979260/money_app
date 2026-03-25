@@ -1,4 +1,10 @@
-import { computeMissingSlots, heuristicExtractSlots } from '../src/common/utils';
+import {
+  computeMissingSlots,
+  heuristicExtractSlots,
+  inferExpenseNature,
+  normalizeMajorType,
+  normalizeReasonText
+} from '../src/common/utils';
 
 describe('utils', () => {
   it('extracts slots from natural language', () => {
@@ -33,5 +39,51 @@ describe('utils', () => {
       needRemark: true
     });
     expect(missing).toContain('remark');
+  });
+
+  it('normalizes reason text and strips control words', () => {
+    expect(normalizeReasonText('确认，午饭外卖')).toBe('午饭外卖');
+    expect(normalizeReasonText('确认')).toBeUndefined();
+  });
+
+  it('normalizes majorType by spending signal', () => {
+    expect(
+      normalizeMajorType({
+        majorType: 'fixed',
+        reason: '饿了么外卖午餐',
+        platformTags: ['饿了么']
+      })
+    ).toBe('extra');
+    expect(
+      normalizeMajorType({
+        majorType: 'extra',
+        reason: '房租'
+      })
+    ).toBe('fixed');
+  });
+
+  it('infers expense nature for optional, essential and one-off', () => {
+    expect(
+      inferExpenseNature({
+        majorType: 'extra',
+        reason: '奶茶',
+        platformTags: ['饿了么'],
+        amount: 20
+      })
+    ).toBe('optional');
+    expect(
+      inferExpenseNature({
+        majorType: 'fixed',
+        reason: '房租',
+        amount: 2800
+      })
+    ).toBe('essential');
+    expect(
+      inferExpenseNature({
+        majorType: 'extra',
+        reason: '亲子乐园',
+        amount: 680
+      })
+    ).toBe('one_off');
   });
 });
