@@ -20,7 +20,14 @@ export function markdownToHtml(source: string) {
   text = text.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
   text = text.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
   text = text.replace(/(?:<li>[\s\S]*?<\/li>\n?)+/g, (block) => `<ul>${block}</ul>`);
-  text = text.replace(/\n{2,}/g, '<br/><br/>');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  text = text.replace(/\n\n/g, '<br/><br/>');
   text = text.replace(/\n/g, '<br/>');
+  // Keep list spacing compact: remove line breaks injected around list tags/items.
+  text = text.replace(/<ul>\s*(?:<br\/>)+/g, '<ul>');
+  text = text.replace(/(?:<br\/>)+\s*<\/ul>/g, '</ul>');
+  text = text.replace(/<\/li>(?:<br\/>)+<li>/g, '</li><li>');
+  text = text.replace(/(?:<br\/>)+<li>/g, '<li>');
+  text = text.replace(/<\/li>(?:<br\/>)+/g, '</li>');
   return text;
 }
