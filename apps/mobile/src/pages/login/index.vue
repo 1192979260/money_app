@@ -12,38 +12,52 @@
     </view>
 
     <view class="auth-card">
-      <text class="eyebrow">Money App</text>
-      <text class="title">优雅记账</text>
+      <text class="eyebrow">Where is Money ?</text>
+      <text class="title">钱呢？</text>
       <text class="subtitle">一笔一记，掌握每一份收支节奏</text>
 
-      <button class="auth-btn primary gold-shine" :disabled="loading" @click="onGuestLogin">
-        {{ loading ? '登录中...' : '游客登录' }}
+      <view class="auth-mode">
+        <button class="mode-item" :class="{ active: authMode === 'login' }" @click="authMode = 'login'">登录</button>
+        <button class="mode-item" :class="{ active: authMode === 'register' }" @click="authMode = 'register'">注册</button>
+      </view>
+
+      <view class="field">
+        <text class="field-label">手机号</text>
+        <input v-model="phone" class="field-input" type="number" maxlength="11" placeholder="请输入11位手机号" />
+      </view>
+      <view class="field">
+        <text class="field-label">密码</text>
+        <input v-model="password" class="field-input" password maxlength="40" placeholder="请输入密码（至少6位）" />
+      </view>
+      <view v-if="authMode === 'register'" class="field">
+        <text class="field-label">昵称（选填）</text>
+        <input v-model="displayName" class="field-input" maxlength="20" placeholder="例如：小雅" />
+      </view>
+
+      <button class="auth-btn primary gold-shine" :disabled="loading" @click="onSubmit">
+        {{ loading ? '处理中...' : authMode === 'login' ? '立即登录' : '立即注册' }}
       </button>
-      <button
-        v-if="wechatSupported"
-        class="auth-btn secondary"
-        :disabled="loading"
-        @click="onWechatLogin"
-      >
-        微信登录
-      </button>
-      <text v-else class="hint">微信登录仅支持微信小程序环境</text>
+      <text class="hint">{{ authMode === 'login' ? '没有账号？切换到“注册”即可创建。' : '注册成功后将自动登录。' }}</text>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { getWechatCode, loginGuest, loginWechat } from '@/services/auth';
+import { loginByPhone, registerByPhone } from '@/services/auth';
 import { useUserStore } from '@/store/user';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
+type AuthMode = 'login' | 'register';
 
 const user = useUserStore();
 const loading = ref(false);
+const authMode = ref<AuthMode>('login');
+const phone = ref('');
+const password = ref('');
+const displayName = ref('');
 const themeMode = ref<ThemeMode>((uni.getStorageSync('appThemeMode') as ThemeMode) || 'auto');
 const systemTheme = (uni.getSystemInfoSync().theme || 'light') as 'light' | 'dark';
-const wechatSupported = process.env.UNI_PLATFORM === 'mp-weixin';
 const isDark = computed(() => (themeMode.value === 'auto' ? systemTheme === 'dark' : themeMode.value === 'dark'));
 
 if (user.token) {
@@ -56,30 +70,34 @@ function setTheme(mode: ThemeMode) {
   uni.setStorageSync('loginThemeMode', mode);
 }
 
-async function onGuestLogin() {
+async function onSubmit() {
   if (loading.value) return;
-  loading.value = true;
-  try {
-    const result = await loginGuest();
-    user.applyAuth(result);
-    uni.reLaunch({ url: '/pages/chat/index' });
-  } catch (_error) {
-    uni.showToast({ title: '游客登录失败，请重试', icon: 'none' });
-  } finally {
-    loading.value = false;
+  const normalizedPhone = phone.value.trim();
+  const normalizedPassword = password.value.trim();
+  if (!/^1\d{10}$/.test(normalizedPhone)) {
+    uni.showToast({ title: '请输入正确手机号', icon: 'none' });
+    return;
   }
-}
+  if (normalizedPassword.length < 6) {
+    uni.showToast({ title: '密码至少6位', icon: 'none' });
+    return;
+  }
 
-async function onWechatLogin() {
-  if (loading.value) return;
   loading.value = true;
   try {
-    const code = await getWechatCode();
-    const result = await loginWechat(code);
+    const result =
+      authMode.value === 'login'
+        ? await loginByPhone(normalizedPhone, normalizedPassword)
+        : await registerByPhone(normalizedPhone, normalizedPassword, displayName.value.trim());
     user.applyAuth(result);
     uni.reLaunch({ url: '/pages/chat/index' });
-  } catch (_error) {
-    uni.showToast({ title: '微信登录失败，请重试', icon: 'none' });
+  } catch (error) {
+    const message = String((error as Error)?.message || '');
+    if (message.includes('400')) {
+      uni.showToast({ title: authMode.value === 'login' ? '手机号或密码错误' : '手机号已被注册', icon: 'none' });
+      return;
+    }
+    uni.showToast({ title: authMode.value === 'login' ? '登录失败，请重试' : '注册失败，请重试', icon: 'none' });
   } finally {
     loading.value = false;
   }
@@ -87,11 +105,9 @@ async function onWechatLogin() {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;800&family=Source+Serif+4:wght@400;500;600&display=swap');
-
 .login-page {
-  --title-font: 'Playfair Display', 'Times New Roman', serif;
-  --body-font: 'Source Serif 4', 'Noto Serif SC', serif;
+  --title-font: 'Noto Serif SC', 'Songti SC', 'STSong', 'Times New Roman', serif;
+  --body-font: 'Noto Serif SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', serif;
   --accent: #c3922f;
   --border-soft: rgba(255, 255, 255, 0.28);
   position: relative;
@@ -237,6 +253,58 @@ async function onWechatLogin() {
   line-height: 1.45;
   color: var(--text-secondary);
   margin-bottom: 8rpx;
+}
+
+.auth-mode {
+  display: flex;
+  border: 1px solid var(--card-edge);
+  border-radius: 999rpx;
+  overflow: hidden;
+  margin-bottom: 2rpx;
+  width: 100%;
+}
+
+.mode-item {
+  flex: 1 1 50%;
+  width: 50%;
+  height: 66rpx;
+  line-height: 66rpx;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 26rpx;
+  margin: 0;
+  padding: 0;
+}
+
+.mode-item::after {
+  border: none;
+}
+
+.mode-item.active {
+  background: linear-gradient(125deg, rgba(216, 170, 84, 0.24), rgba(159, 117, 34, 0.45));
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.field {
+  display: grid;
+  gap: 8rpx;
+}
+
+.field-label {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+.field-input {
+  height: 76rpx;
+  border-radius: 16rpx;
+  border: 1px solid var(--card-edge);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  padding: 0 18rpx;
+  box-sizing: border-box;
 }
 
 .auth-btn {
