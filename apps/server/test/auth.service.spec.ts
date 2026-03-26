@@ -6,6 +6,7 @@ import { AuthService } from '../src/auth/auth.service';
 describe('AuthService', () => {
   const userUpsert = jest.fn();
   const userFindUnique = jest.fn();
+  const userCreate = jest.fn();
   const userUpdate = jest.fn();
   const userDelete = jest.fn();
   const ledgerUpdateMany = jest.fn();
@@ -30,7 +31,7 @@ describe('AuthService', () => {
   };
 
   const prisma = {
-    user: { upsert: userUpsert },
+    user: { upsert: userUpsert, findUnique: userFindUnique, create: userCreate },
     $transaction: jest.fn(async (callback: (inner: typeof tx) => unknown) => callback(tx))
   } as any;
 
@@ -113,5 +114,44 @@ describe('AuthService', () => {
     expect(adviceUpdateMany).toHaveBeenCalledWith({ where: { userId: 'guest-2' }, data: { userId: 'wx-2' } });
     expect(userDelete).toHaveBeenCalledWith({ where: { id: 'guest-2' } });
     expect(result.user.id).toBe('wx-2');
+  });
+
+  it('registerByPhone should create account user and return account token', async () => {
+    const config = new ConfigService({});
+    const service = new AuthService(prisma, jwtService, config);
+
+    userFindUnique.mockResolvedValueOnce(null);
+    userCreate.mockResolvedValueOnce({
+      id: 'u-phone-1',
+      displayName: '用户1234'
+    });
+
+    const result = await service.registerByPhone({
+      phone: '13800138000',
+      password: 'abcdef',
+      displayName: '用户1234'
+    });
+
+    expect(userCreate).toHaveBeenCalled();
+    expect(result.user.id).toBe('u-phone-1');
+    expect(result.user.loginType).toBe('account');
+  });
+
+  it('loginByPhone should reject when password is invalid', async () => {
+    const config = new ConfigService({});
+    const service = new AuthService(prisma, jwtService, config);
+
+    userFindUnique.mockResolvedValueOnce({
+      id: 'u-phone-2',
+      displayName: '用户',
+      passwordHash: 'bad-format'
+    });
+
+    await expect(
+      service.loginByPhone({
+        phone: '13800138000',
+        password: 'wrong'
+      })
+    ).rejects.toThrow(UnauthorizedException);
   });
 });

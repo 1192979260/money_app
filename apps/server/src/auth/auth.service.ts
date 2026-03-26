@@ -1,8 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import { GuestLoginDto } from './dto';
+import { GuestLoginDto, PhoneLoginDto, PhoneRegisterDto } from './dto';
+import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
 @Injectable()
 export class AuthService {
@@ -105,11 +106,49 @@ export class AuthService {
     return this.buildAuthResult(user.id, user.displayName, 'guest');
   }
 
+  async registerByPhone(dto: PhoneRegisterDto) {
+    const phone = this.normalizePhone(dto.phone);
+    const password = dto.password?.trim();
+    if (!password || password.length < 6) {
+      throw new BadRequestException('Password should be at least 6 chars');
+    }
+
+    const existed = await this.prisma.user.findUnique({ where: { phone } });
+    if (existed) {
+      throw new BadRequestException('Phone already registered');
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        phone,
+        passwordHash: this.hashPassword(password),
+        displayName: dto.displayName?.trim() || `用户${phone.slice(-4)}`
+      }
+    });
+
+    return this.buildAuthResult(user.id, user.displayName, 'account');
+  }
+
+  async loginByPhone(dto: PhoneLoginDto) {
+    const phone = this.normalizePhone(dto.phone);
+    const password = dto.password?.trim();
+    if (!password) {
+      throw new UnauthorizedException('Invalid phone or password');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user?.passwordHash || !this.verifyPassword(password, user.passwordHash)) {
+      throw new UnauthorizedException('Invalid phone or password');
+    }
+
+    return this.buildAuthResult(user.id, user.displayName, 'account');
+  }
+
   private signToken(userId: string): string {
     return this.jwtService.sign({ sub: userId });
   }
 
-  private buildAuthResult(userId: string, displayName: string | null, loginType: 'wechat' | 'guest') {
+  private buildAuthResult(userId: string, displayName: string | null, loginType: 'wechat' | 'guest' | 'account') {
     return {
       token: this.signToken(userId),
       user: {
@@ -118,6 +157,29 @@ export class AuthService {
         loginType
       }
     };
+  }
+
+  private normalizePhone(phone: string) {
+    const normalized = String(phone || '').replace(/\s+/g, '');
+    if (!/^1\d{10}$/.test(normalized)) {
+      throw new BadRequestException('Invalid phone number');
+    }
+    return normalized;
+  }
+
+  private hashPassword(raw: string) {
+    const salt = randomBytes(16).toString('hex');
+    const digest = scryptSync(raw, salt, 64).toString('hex');
+    return `${salt}:${digest}`;
+  }
+
+  private verifyPassword(raw: string, encoded: string) {
+    const [salt, digest] = String(encoded || '').split(':');
+    if (!salt || !digest) return false;
+    const actual = scryptSync(raw, salt, 64);
+    const expected = Buffer.from(digest, 'hex');
+    if (expected.length !== actual.length) return false;
+    return timingSafeEqual(expected, actual);
   }
 
   private async resolveOpenidByCode(code: string): Promise<string | null> {

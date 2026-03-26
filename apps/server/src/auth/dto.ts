@@ -18,3 +18,23 @@ export class GuestLoginDto {
   @IsString()
   displayName?: string;
 }
+
+export class PhoneRegisterDto {
+  @IsString()
+  phone!: string;
+
+  @IsString()
+  password!: string;
+
+  @IsOptional()
+  @IsString()
+  displayName?: string;
+}
+
+export class PhoneLoginDto {
+  @IsString()
+  phone!: string;
+
+  @IsString()
+  password!: string;
+}

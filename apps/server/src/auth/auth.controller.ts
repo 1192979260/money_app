@@ -1,6 +1,6 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { BindWechatDto, GuestLoginDto, WechatLoginDto } from './dto';
+import { BindWechatDto, GuestLoginDto, PhoneLoginDto, PhoneRegisterDto, WechatLoginDto } from './dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from '../common/current-user.decorator';
 
@@ -25,5 +25,15 @@ export class AuthController {
   @Post('guest')
   async guestLogin(@Body() dto: GuestLoginDto) {
     return this.authService.loginGuest(dto);
+  }
+
+  @Post('register')
+  async register(@Body() dto: PhoneRegisterDto) {
+    return this.authService.registerByPhone(dto);
+  }
+
+  @Post('login')
+  async login(@Body() dto: PhoneLoginDto) {
+    return this.authService.loginByPhone(dto);
   }
 }
