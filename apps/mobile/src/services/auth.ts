@@ -38,6 +38,25 @@ export async function loginGuest() {
   return result;
 }
 
+export async function registerByPhone(phone: string, password: string, displayName?: string) {
+  const result = await apiRequest<AuthResult>('/auth/register', 'POST', {
+    phone,
+    password,
+    displayName: displayName?.trim() || undefined
+  });
+  saveAuth(result);
+  return result;
+}
+
+export async function loginByPhone(phone: string, password: string) {
+  const result = await apiRequest<AuthResult>('/auth/login', 'POST', {
+    phone,
+    password
+  });
+  saveAuth(result);
+  return result;
+}
+
 export async function bindWechat(code: string) {
   const result = await apiRequest<AuthResult>('/auth/wechat/bind', 'POST', { code });
   saveAuth(result);
